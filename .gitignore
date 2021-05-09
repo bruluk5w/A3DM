@@ -5,3 +5,4 @@
 **/release
 *.pdb
 *.stash
+*.user
