@@ -1,0 +1,96 @@
+#include <QFileDialog>
+#include "Volume.h"
+
+#include <QMessageBox>
+#include <QTextStream>
+
+namespace {
+    const int invalid = -1;
+}
+
+Volume::Volume(const char* filename) :
+    width(invalid),
+    numSamples(invalid),
+    low(FLT_MAX),
+    high(FLT_MIN),
+    data(nullptr),
+    valid(false)
+{
+    struct Closer {
+        Closer(const char* filename) : file(filename) { }
+        ~Closer() { file.close(); }
+        QFile file;
+    } file (filename);
+
+    if (!file.file.open(QIODevice::ReadOnly)) {
+        QMessageBox::information(0, "error", file.file.errorString());
+        return;
+    }
+
+    QTextStream in(&file.file);
+    if (in.atEnd()) {
+        QMessageBox::information(0, "error", "File to does not state volume dimensions.");
+        return;
+    }
+
+    bool ok = false;
+    width = in.readLine().toInt(&ok);
+    if (!ok) {
+        width = invalid;
+        QMessageBox::information(0, "error", "Could not read volume dimensions.");
+        return;
+    }
+
+    numSamples = width * width * width;
+
+    const size_t maxDataSize = 4294967296; // max 4 GB
+    if (width <= 0 || numSamples * sizeof(float) > maxDataSize) {
+        width = numSamples = invalid;
+        QMessageBox::information(0, "error", "Invalid or too large volume dimensions.");
+        return;
+    }
+    
+    data = std::unique_ptr<float[]>(new float[numSamples]);
+    int i = 0;
+    while (i < numSamples && !in.atEnd())
+    {
+        float sample = in.readLine().toFloat(&ok);
+        if (!ok) {
+            width = numSamples = invalid;
+            data = nullptr;
+            QMessageBox::information(0, "error", "Invalid sample.");
+            return;
+        }
+
+        data[i] = sample;
+        if (sample < low) low = sample;
+        if (sample > high) high = sample;
+
+        ++i;
+    }
+
+    if (i != numSamples) {
+        width = numSamples = invalid;
+        low = FLT_MAX;
+        high = FLT_MIN;
+        data = nullptr;
+        QMessageBox::information(0, "error", "Could not read enough data from file for stated dimensions.");
+        return;
+    }
+
+    if (!in.atEnd()) {
+        QMessageBox::information(0, "warning", "All samples read but file not fully read.");
+    }
+
+    valid = true;
+}
+
+float Volume::getIsovalue(float t) const
+{
+    if (!valid) {
+        QMessageBox::information(0, "error", "Invalid volume model has no isovalue.");
+        return 0;
+    }
+
+    return low + (high - low) * t;
+}
