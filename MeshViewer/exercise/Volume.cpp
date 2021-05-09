@@ -11,8 +11,8 @@ namespace {
 Volume::Volume(const char* filename) :
     width(invalid),
     numSamples(invalid),
-    low(FLT_MAX),
-    high(FLT_MIN),
+    low(std::numeric_limits<float>::max()),
+    high(std::numeric_limits<float>::lowest()),
     data(nullptr),
     valid(false)
 {
@@ -71,8 +71,8 @@ Volume::Volume(const char* filename) :
 
     if (i != numSamples) {
         width = numSamples = invalid;
-        low = FLT_MAX;
-        high = FLT_MIN;
+        low = std::numeric_limits<float>::max();
+        high = std::numeric_limits<float>::lowest();
         data = nullptr;
         QMessageBox::information(0, "error", "Could not read enough data from file for stated dimensions.");
         return;

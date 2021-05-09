@@ -20,9 +20,9 @@
 #include "utils.h"
 #include <string.h>
 #include <cmath>
-#include <cfloat>
-#define min(a, b) ((a)<(b))?a:b
-#define max(a, b) ((a)>(b))?a:b
+#include <numeric>
+#include <algorithm>
+
 
 BoundingBox::BoundingBox(double *p) {
   memmove(_min, p, 3*sizeof(double));
@@ -30,8 +30,8 @@ BoundingBox::BoundingBox(double *p) {
 }
 
 BoundingBox::BoundingBox() {
-  _min[0] = _min[1] = _min[2] = FLT_MAX;
-  _max[0] = _max[1] = _max[2] = FLT_MIN;
+  _min[0] = _min[1] = _min[2] = std::numeric_limits<float>::max();
+  _max[0] = _max[1] = _max[2] = std::numeric_limits<float>::lowest();
 }
 
 void BoundingBox::add(double *p) {
@@ -44,8 +44,8 @@ void BoundingBox::add(double *p) {
 
 void BoundingBox::add(const BoundingBox &bb) {
   for (unsigned int i=0; i<3; ++i) {
-    _min[i] = min(_min[i], bb._min[i]);
-    _max[i] = max(_max[i], bb._max[i]);
+    _min[i] = std::min(_min[i], bb._min[i]);
+    _max[i] = std::max(_max[i], bb._max[i]);
   }
 }
 
