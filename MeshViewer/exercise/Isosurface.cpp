@@ -22,9 +22,23 @@ namespace
 		1, 3
 	};
 
-	const std::pair<uint8_t,uint8_t> edge_to_buffer_idx[12] = {
-		{},
-	}
+	// first index is index of buffer, second parameter describes which of (x, y) to use to index the buffer (false->x;true->x,y), last number if the index shift to apply (todo: replace index shift in this table by proper naming of the edges to allow using the bits of the names)
+	const std::tuple<uint8_t, bool, uint8_t> edge_to_buffer_idx[12] = {
+		{1, 0, 0}, // 0
+		{2, 1, 0}, // 1
+		{1, 0, 1}, // 2
+		{3, 1, 0}, // 3
+		{0, 0, 0}, // 4
+		{2, 1, }, // 5
+		{0, 0, 1}, // 6
+		{, }, // 7
+		{, }, // 8
+		{, }, // 9
+		{, }, // 10
+		{, }, // 11
+	};
+	//x * (xy & 1) + offset & 1 + (xy & 3) * (xy & 1) * vol.width
+	// although loops start at one, indices here start at 0
 }
 void initWithInvalidHandle(MyMesh::VertexHandle* h, int n) {
 	for (int i = 0; i < n; ++i) {
@@ -36,33 +50,28 @@ void extractIsoSurface(const Volume& vol, float t,  MyMesh& m) {
 	m.clear();
 
 	MyMesh::VertexHandle vh, vhandle[3];
-	// last vertices of edges along x axis of the last ystep
-	std::unique_ptr<MyMesh::VertexHandle[]> last_vtx_buffer_y(new MyMesh::VertexHandle[vol.width]);
-	initWithInvalidHandle(last_vtx_buffer_y.get(), vol.width);
-	// last vertices of edges along x axis of the current y step
-	std::unique_ptr<MyMesh::VertexHandle[]> next_vtx_buffer_y(new MyMesh::VertexHandle[vol.width]);
-	initWithInvalidHandle(next_vtx_buffer_y.get(), vol.width);
-	// last vertices of edges along x axis of the last z step
-	std::unique_ptr<MyMesh::VertexHandle[]> last_vtx_buffer_z_horiz(new MyMesh::VertexHandle[vol.width * vol.width]);
-	initWithInvalidHandle(last_vtx_buffer_z_horiz.get(), vol.width * vol.width);
-	// last vertices of edges along x axis of the current z step
-	std::unique_ptr<MyMesh::VertexHandle[]> next_vtx_buffer_z_horiz(new MyMesh::VertexHandle[vol.width * vol.width]);
-	initWithInvalidHandle(next_vtx_buffer_z_horiz.get(), vol.width * vol.width);
-	// last vertices of edges along y axis of the last z step
-	std::unique_ptr<MyMesh::VertexHandle[]> last_vtx_buffer_z_vert(new MyMesh::VertexHandle[vol.width * vol.width]);
-	initWithInvalidHandle(last_vtx_buffer_z_vert.get(), vol.width * vol.width);
-	// last vertices of edges along y axis of the current z step
-	std::unique_ptr<MyMesh::VertexHandle[]> next_vtx_buffer_z_vert(new MyMesh::VertexHandle[vol.width * vol.width]);
-	initWithInvalidHandle(next_vtx_buffer_z_vert.get(), vol.width * vol.width);
 
 	std::unique_ptr<MyMesh::VertexHandle[]> buffer_array[6] = {
-		&last_vtx_buffer_y,
-		&next_vtx_buffer_y,
-		&last_vtx_buffer_z_horiz,
-		&next_vtx_buffer_z_horiz,
-		&last_vtx_buffer_z_vert,
-		&next_vtx_buffer_z_vert
+		// vertices of edges along x axis of the last y step
+		std::unique_ptr<MyMesh::VertexHandle[]> (new MyMesh::VertexHandle[vol.width]),
+		// vertices of edges along x axis of the current y step
+		std::unique_ptr<MyMesh::VertexHandle[]> (new MyMesh::VertexHandle[vol.width]),
+		// vertices of edges along x axis of the last z step
+		std::unique_ptr<MyMesh::VertexHandle[]> (new MyMesh::VertexHandle[vol.width * vol.width]),
+		// vertices of edges along x axis of the current z step
+		std::unique_ptr<MyMesh::VertexHandle[]> (new MyMesh::VertexHandle[vol.width * vol.width]),
+		// vertices of edges along y axis of the last z step
+		std::unique_ptr<MyMesh::VertexHandle[]> (new MyMesh::VertexHandle[vol.width * vol.width]),
+		// vertices of edges along y axis of the current z step
+		std::unique_ptr<MyMesh::VertexHandle[]> (new MyMesh::VertexHandle[vol.width * vol.width])
 	};
+
+	initWithInvalidHandle(buffer_array[0].get(), vol.width);
+	initWithInvalidHandle(buffer_array[1].get(), vol.width);
+	initWithInvalidHandle(buffer_array[2].get(), vol.width * vol.width);
+	initWithInvalidHandle(buffer_array[3].get(), vol.width * vol.width);
+	initWithInvalidHandle(buffer_array[4].get(), vol.width * vol.width);
+	initWithInvalidHandle(buffer_array[5].get(), vol.width * vol.width);
 
 	std::vector<MyMesh::VertexHandle>  face_vhandles;
 
