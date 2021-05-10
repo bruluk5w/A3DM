@@ -2,6 +2,7 @@
 
 #include "exercise/taulaMC.hpp"
 #include <cstdint>
+#include <memory>
 
 
 namespace
@@ -20,12 +21,49 @@ namespace
 		0, 2,
 		1, 3
 	};
+
+	const std::pair<uint8_t,uint8_t> edge_to_buffer_idx[12] = {
+		{},
+	}
+}
+void initWithInvalidHandle(MyMesh::VertexHandle* h, int n) {
+	for (int i = 0; i < n; ++i) {
+		h[i] = MyMesh::VertexHandle();
+	}
 }
 
 void extractIsoSurface(const Volume& vol, float t,  MyMesh& m) {
 	m.clear();
 
 	MyMesh::VertexHandle vh, vhandle[3];
+	// last vertices of edges along x axis of the last ystep
+	std::unique_ptr<MyMesh::VertexHandle[]> last_vtx_buffer_y(new MyMesh::VertexHandle[vol.width]);
+	initWithInvalidHandle(last_vtx_buffer_y.get(), vol.width);
+	// last vertices of edges along x axis of the current y step
+	std::unique_ptr<MyMesh::VertexHandle[]> next_vtx_buffer_y(new MyMesh::VertexHandle[vol.width]);
+	initWithInvalidHandle(next_vtx_buffer_y.get(), vol.width);
+	// last vertices of edges along x axis of the last z step
+	std::unique_ptr<MyMesh::VertexHandle[]> last_vtx_buffer_z_horiz(new MyMesh::VertexHandle[vol.width * vol.width]);
+	initWithInvalidHandle(last_vtx_buffer_z_horiz.get(), vol.width * vol.width);
+	// last vertices of edges along x axis of the current z step
+	std::unique_ptr<MyMesh::VertexHandle[]> next_vtx_buffer_z_horiz(new MyMesh::VertexHandle[vol.width * vol.width]);
+	initWithInvalidHandle(next_vtx_buffer_z_horiz.get(), vol.width * vol.width);
+	// last vertices of edges along y axis of the last z step
+	std::unique_ptr<MyMesh::VertexHandle[]> last_vtx_buffer_z_vert(new MyMesh::VertexHandle[vol.width * vol.width]);
+	initWithInvalidHandle(last_vtx_buffer_z_vert.get(), vol.width * vol.width);
+	// last vertices of edges along y axis of the current z step
+	std::unique_ptr<MyMesh::VertexHandle[]> next_vtx_buffer_z_vert(new MyMesh::VertexHandle[vol.width * vol.width]);
+	initWithInvalidHandle(next_vtx_buffer_z_vert.get(), vol.width * vol.width);
+
+	std::unique_ptr<MyMesh::VertexHandle[]> buffer_array[6] = {
+		&last_vtx_buffer_y,
+		&next_vtx_buffer_y,
+		&last_vtx_buffer_z_horiz,
+		&next_vtx_buffer_z_horiz,
+		&last_vtx_buffer_z_vert,
+		&next_vtx_buffer_z_vert
+	};
+
 	std::vector<MyMesh::VertexHandle>  face_vhandles;
 
 	const float isovalue = vol.getIsovalue(t);
@@ -47,11 +85,7 @@ void extractIsoSurface(const Volume& vol, float t,  MyMesh& m) {
 				data[prev_z * z_stride + prev_y * y_stride], 0,
 			};
 
-			uint8_t table_index = 
-				uint8_t(value_table[0] < isovalue) | 
-				uint8_t(value_table[2] < isovalue) << 2 | 
-				uint8_t(value_table[4] < isovalue) << 4 | 
-				uint8_t(value_table[6] < isovalue) << 6;
+			uint8_t table_index = uint8_t(value_table[0] < isovalue) | uint8_t(value_table[2] < isovalue) << 2 | uint8_t(value_table[4] < isovalue) << 4 | uint8_t(value_table[6] < isovalue) << 6;
 
 			uint16_t prev_x = 0;
 			for (size_t x = 1; x < vol.width; ++x)
@@ -65,27 +99,28 @@ void extractIsoSurface(const Volume& vol, float t,  MyMesh& m) {
 				float vtx_x[8] = { prev_x, x , prev_x ,      x , prev_x ,      x , prev_x ,      x };
 				float vtx_y[8] = {      y, y , prev_y , prev_y ,      y ,      y , prev_y , prev_y };
 				float vtx_z[8] = {      z, z ,      z ,      z , prev_z , prev_z , prev_z , prev_z };
-				table_index |= 
-					uint8_t(value_table[1] < isovalue) << 1 |
-					uint8_t(value_table[3] < isovalue) << 3 |
-					uint8_t(value_table[5] < isovalue) << 5 |
-					uint8_t(value_table[7] < isovalue) << 7;
+				table_index |= uint8_t(value_table[1] < isovalue) << 1 | uint8_t(value_table[3] < isovalue) << 3 | uint8_t(value_table[5] < isovalue) << 5 | uint8_t(value_table[7] < isovalue) << 7;
 				for (const std::array<uint8_t, 3>&tri : mc_table[table_index])
 				{
 					face_vhandles.clear();
 
 #define MAKE_VERTEX(side) \
-	const uint8_t idxFrom ## side = edge_to_vtx_idx[ tri[side] << 1    ]; \
-	const uint8_t idxTo   ## side = edge_to_vtx_idx[(tri[side] << 1) | 1]; \
-	const Volume::sample_t valueFrom ## side = value_table[idxFrom ## side]; \
-	const Volume::sample_t valueTo   ## side = value_table[idxTo   ## side]; \
-	const float t ## side = abs(valueTo ## side - valueFrom ## side) < 0.00001f ? 0.0f : (isovalue - valueFrom ## side) / (float)(valueTo ## side - valueFrom ## side); \
-	MyMesh::Point pt ## side = MyMesh::Point( \
-		vtx_x[idxFrom ## side] * (1 - t ## side) + t ## side * vtx_x[idxTo ## side], \
-		vtx_y[idxFrom ## side] * (1 - t ## side) + t ## side * vtx_y[idxTo ## side], \
-		vtx_z[idxFrom ## side] * (1 - t ## side) + t ## side * vtx_z[idxTo ## side]) * scale; \
-	vh = m.add_vertex( pt ## side  \
-	); \
+	const uint8_t edge_idx ## side = tri[side]; \
+	if (edge_idx ## side && false) { \
+	} \
+	else { \
+		const uint8_t idxFrom ## side = edge_to_vtx_idx[ edge_idx ## side << 1    ]; \
+		const uint8_t idxTo   ## side = edge_to_vtx_idx[(edge_idx ## side << 1) | 1]; \
+		const Volume::sample_t valueFrom ## side = value_table[idxFrom ## side]; \
+		const Volume::sample_t valueTo   ## side = value_table[idxTo   ## side]; \
+		const float t ## side = abs(valueTo ## side - valueFrom ## side) < 0.00001f ? 0.0f : (isovalue - valueFrom ## side) / (float)(valueTo ## side - valueFrom ## side); \
+		MyMesh::Point pt ## side = MyMesh::Point( \
+			vtx_x[idxFrom ## side] * (1 - t ## side) + t ## side * vtx_x[idxTo ## side], \
+			vtx_y[idxFrom ## side] * (1 - t ## side) + t ## side * vtx_y[idxTo ## side], \
+			vtx_z[idxFrom ## side] * (1 - t ## side) + t ## side * vtx_z[idxTo ## side]) * scale; \
+		vh = m.add_vertex( pt ## side  \
+		); \
+	} \
 	vhandle[side] = vh; \
 	face_vhandles.push_back(vhandle[side]);
 
@@ -115,6 +150,7 @@ void extractIsoSurface(const Volume& vol, float t,  MyMesh& m) {
 				table_index = table_index >> 1 & 0x55;
 
 				prev_x = x;
+
 			}
 
 			prev_y = y;
