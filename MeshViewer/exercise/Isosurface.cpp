@@ -8,18 +8,18 @@
 namespace
 {
 	const uint8_t edge_to_vtx_idx[12 * 2] = {
-		0, 4,
-		4, 5,
-		1, 5,
-		0, 1,
-		2, 6,
-		6, 7,
-		3, 7,
-		2, 3,
-		4, 6,
-		5, 7,
-		0, 2,
-		1, 3
+		2, 6, // 4
+		3, 7, // 6
+		0, 4, // 0
+		1, 5, // 2
+		6, 7, // 5
+		4, 5, // 1
+		2, 3, // 7
+		0, 1, // 3
+		4, 6, // 8
+		5, 7, // 9
+		0, 2, // 10
+		1, 3, // 11
 	};
 
 	// first index is index of buffer, second parameter describes which of (x, y) to use to index the buffer (false->x;true->x,y), last number if the index shift to apply (todo: replace index shift in this table by proper naming of the edges to allow using the bits of the names)
