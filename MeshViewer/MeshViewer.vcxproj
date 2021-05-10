@@ -362,6 +362,7 @@
     <QtMoc Include="glwin.h">
     </QtMoc>
     <ClInclude Include="exercise\Isosurface.h" />
+    <ClInclude Include="exercise\taulaMC.hpp" />
     <ClInclude Include="exercise\Volume.h" />
     <ClInclude Include="MeshViewer_Precomp.h" />
     <ClInclude Include="scene.h" />
