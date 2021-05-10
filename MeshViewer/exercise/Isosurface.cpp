@@ -22,23 +22,27 @@ namespace
 		0, 1, // 3
 	};
 
-	// first index is index of buffer, second parameter describes which of (x, y) to use to index the buffer (false->x;true->x,y), last number if the index shift to apply (todo: replace index shift in this table by proper naming of the edges to allow using the bits of the names)
-	const std::tuple<uint8_t, bool, uint8_t> edge_to_buffer_idx[12] = {
-		{1, 0, 0}, // 0
-		{2, 1, 0}, // 1
-		{1, 0, 1}, // 2
-		{3, 1, 0}, // 3
-		{0, 0, 0}, // 4
-		{2, 1, }, // 5
-		{0, 0, 1}, // 6
-		{, }, // 7
-		{, }, // 8
-		{, }, // 9
-		{, }, // 10
-		{, }, // 11
-	};
-	//x * (xy & 1) + offset & 1 + (xy & 3) * (xy & 1) * vol.width
-	// although loops start at one, indices here start at 0
+	//// first index is index of buffer, second parameter describes which of (x, y) to use to index the buffer (false->x;true->x,y), last number if the index shift to apply (todo: replace index shift in this table by proper naming of the edges to allow using the bits of the names)
+	//const std::tuple<uint8_t, bool, uint8_t> edge_to_buffer_idx[12] = {
+	//	{1, 0, 0}, // 0
+	//	{2, 1, 0}, // 1
+	//	{1, 0, 1}, // 2
+	//	{3, 1, 0}, // 3
+	//	{0, 0, 0}, // 4
+	//	{2, 1, }, // 5
+	//	{0, 0, 1}, // 6
+	//	{, }, // 7
+	//	{, }, // 8
+	//	{, }, // 9
+	//	{, }, // 10
+	//	{, }, // 11
+	//};
+	//const uint8_t buffer_idx = edge_idx >> 1;
+	//const uint8_t offset = edge_idx & 1;
+	//const bool isVertical = edge_idx & 0x08;
+	//const bool is2DBuffer = edge_idx & 0x0c;
+	// int bufferIdx = x + offset & ~(isVertical) + (y + offset & (isVertical)) * vol.width
+	// although loops start at one, indices here start at 0 (offsets are applied in the formula)
 }
 void initWithInvalidHandle(MyMesh::VertexHandle* h, int n) {
 	for (int i = 0; i < n; ++i) {
