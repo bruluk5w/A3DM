@@ -34,21 +34,23 @@ Volume::Volume(const char* filename) :
     }
 
     bool ok = false;
-    width = in.readLine().toInt(&ok);
+    int intWidth = in.readLine().toInt(&ok);
     if (!ok) {
         width = invalid;
         QMessageBox::information(0, "error", "Could not read volume dimensions.");
         return;
     }
 
-    numSamples = width * width * width;
+    numSamples = intWidth * intWidth * intWidth;
 
     const size_t maxDataSize = 4294967296; // max 4 GB
-    if (width <= 0 || numSamples * sizeof(float) > maxDataSize) {
-        width = numSamples = invalid;
+    if (intWidth <= 0 || numSamples * sizeof(float) > maxDataSize || intWidth > std::numeric_limits<uint16_t>::max() >> 2) {
+        numSamples = invalid;
         QMessageBox::information(0, "error", "Invalid or too large volume dimensions.");
         return;
     }
+
+    width = (uint16_t)intWidth;
     
     data = std::unique_ptr<float[]>(new float[numSamples]);
     int i = 0;

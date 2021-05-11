@@ -331,7 +331,7 @@ void glwin::paintGL(void) {
 	if (volumeVao != 0)
 	{
 		glBindVertexArray(volumeVao);
-		glDrawArrays(GL_TRIANGLES, 0, volumeNumElements);
+		glDrawElements(GL_TRIANGLES, volumeNumElements, GL_UNSIGNED_INT, 0);
 	}
 
 	glBindVertexArray(0);

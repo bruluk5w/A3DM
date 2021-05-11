@@ -9,7 +9,7 @@ struct Volume
 	Volume(const char* filename);
 	float getIsovalue(float t) const;
 
-	int width;
+	uint16_t width;
 	int numSamples;
 
 	sample_t low;
