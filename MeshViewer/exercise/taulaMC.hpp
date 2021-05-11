@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __taula_MC_h_
+#define __taula_MC_h_
 
 #include <vector>
 #include <array>
@@ -262,3 +263,4 @@ std::vector<std::array<uint8_t, 3>> mc_table[256] = {
     { { 6, 11, 2, }},
 {},
 };
+#endif

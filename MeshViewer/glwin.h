@@ -94,7 +94,6 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   GLuint volumeNumElements;
 
   BoundingBox bb;
-  std::vector<BoundingBox> boxes;
   
   glm::mat4 modelViewMatrix;
   glm::vec3 VRP;

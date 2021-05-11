@@ -102,7 +102,8 @@ glwin::glwin(const std::string& args) :
 	// Construct a 1-second timeline with a frame range of 0 - 100
 	timeLine = new QTimeLine(1000);
 	timeLine->setFrameRange(0, numFrames->value());
-	timeLine->setUpdateInterval(100);
+	timeLine->setUpdateInterval(10);
+	timeLine->setCurveShape(QTimeLine::CurveShape::LinearCurve);
 	connect(timeLine, &QTimeLine::frameChanged, this, &glwin::animationFrame);
 	connect(timeLine, &QTimeLine::finished, this, &glwin::animationStop);
 
@@ -221,7 +222,7 @@ void glwin::toggleAnimation()
 		progressBar->setValue(0);
 		timeLine->setFrameRange(0, numFrames->value());
 		timeLine->setStartFrame(0);
-		timeLine->setDuration(100 * n);
+		timeLine->setDuration(10 * n);
 		timeLine->start();
 		isAnimating = true;
 	}
@@ -243,7 +244,7 @@ void glwin::animationFrame(int frame)
 
 	buildIsosurface();
 	++this->frame;
-	timeLine->setCurrentTime(this->frame * 100);
+	timeLine->setCurrentTime(this->frame * 10);
 }
 
 void glwin::animationStop()
@@ -675,14 +676,12 @@ void glwin::addToRender(const MyMesh& m, const Scene::ColorInfo& ci) {
 
 void glwin::updateView(const MyMesh& m)
 {
-
 	// we now update a bounding box and the camera to include the new mesh:
 	double* p = (double*)(m.points());
 	BoundingBox bbaux(p);
 	for (unsigned int i = 1; i < m.n_vertices(); ++i)
 		bbaux.add(p + 3 * i);
 
-	boxes.push_back(std::move(bbaux));
 	bb.add(bbaux);
 	std::cerr << "Box:   (" << bbaux.min()[0] << ", " << bbaux.min()[1] << ", " << bbaux.min()[2]
 		<< "),  (" << bbaux.max()[0] << ", " << bbaux.max()[1] << ", " << bbaux.max()[2]
@@ -707,9 +706,9 @@ void glwin::setVolumeToRender(const MyMesh& m)
 {		
 	if (volumeVao != 0)
 	{
+		glDeleteVertexArrays(1, &volumeVao);
 		glDeleteBuffers(countof(volumeVbos), volumeVbos);
 		memset(volumeVbos, 0, sizeof(volumeVbos));
-		glDeleteVertexArrays(1, &volumeVao);
 		volumeVao = 0;
 		volumeNumElements = 0;
 	}
@@ -739,14 +738,18 @@ void glwin::setVolumeToRender(const MyMesh& m)
 
 	// vtx color
 	glBindBuffer(GL_ARRAY_BUFFER, volumeVbos[2]);
-	std::unique_ptr<GLfloat[]> pColors(new GLfloat[m.n_vertices() * 3]);
-	GLfloat* Colors = pColors.get();
-	for (unsigned int i = 0; i < m.n_vertices(); ++i) {
-		*(Colors + 3 * i + 0) = fabs(m.vertex_normals()[i][0]);
-		*(Colors + 3 * i + 1) = fabs(m.vertex_normals()[i][1]);
-		*(Colors + 3 * i + 2) = fabs(m.vertex_normals()[i][2]);
+	{
+		std::unique_ptr<GLfloat[]> pColors(new GLfloat[m.n_vertices() * 3]);
+		GLfloat* Colors = pColors.get();
+		for (unsigned int i = 0; i < m.n_vertices(); ++i) {
+			Colors[3 * i + 0] = fabs(m.vertex_normals()[i][0]);
+			Colors[3 * i + 1] = fabs(m.vertex_normals()[i][1]);
+			Colors[3 * i + 2] = fabs(m.vertex_normals()[i][2]);
+		}
+
+		glBufferData(GL_ARRAY_BUFFER, m.n_vertices() * 3 * sizeof(GL_FLOAT), Colors, GL_STATIC_DRAW);
 	}
-	glBufferData(GL_ARRAY_BUFFER, m.n_vertices() * 3 * sizeof(GL_FLOAT), Colors, GL_STATIC_DRAW);
+
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 

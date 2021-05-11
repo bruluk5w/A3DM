@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __Volume_h_
+#define __Volume_h_
 
 #include <memory>
 
@@ -18,3 +19,5 @@ struct Volume
 
 	bool valid;
 };
+
+#endif

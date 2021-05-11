@@ -1,21 +1,21 @@
 TEMPLATE = app
 QT += opengl
 QT += widgets
-CONFIG += debug
+CONFIG += release
 CONFIG += warn_on
-QMAKE_CXX = g++-5
-QMAKE_CC = gcc-5
+QMAKE_CXX = g++-7
+QMAKE_CC = gcc-7
 QMAKE_CXXFLAGS += -std=c++11 -D__USE_XOPEN
 
 # Inputs:
 INCLUDEPATH += .
 INCLUDEPATH += /assig/sgi/include
 
-# HEADERS += ./*.h
-@HEADERS = $$files(./*.h)@
-# SOURCES += ./*.cxx
-@SOURCES = $$files(./*.cxx)@
-
+HEADERS += ./*.h
+SOURCES += ./*.cxx
+HEADERS += ./exercise/*.h
+HEADERS += ./exercise/*.hpp
+SOURCES += ./exercise/*.cpp
 
 LIBS += -lGLU
 LIBS += -L/assig/sgi/lib -Wl,-rpath,/assig/sgi/lib/ -lOpenMeshCore -lOpenMeshTools
