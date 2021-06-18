@@ -1,10 +1,11 @@
 import bpy
 
 from .lsystem import lsystem
+from .lsystem_settings import ALPHABET, VARIABLES
 
 
 class VIEW3D_MT_add_lsystem(bpy.types.Operator):
-    """Add an L-system to the scene"""
+    """Add an L-System to the scene"""
     bl_idname = "add.lsystem"
     bl_label = "L-System"
     bl_options = {'REGISTER', 'UNDO'}
@@ -21,8 +22,48 @@ class VIEW3D_MT_add_lsystem(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class LSYSTEM_OT_add_rule(bpy.types.Operator):
+    """Add a rule the the selected L-System"""
+    bl_idname = "lsystem.add_rule"
+    bl_label = "Add Rule"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        obj = context.active_object
+        settings = getattr(obj, 'lsystem', None)
+        if settings is None:
+            return {'CANCELLED'}
+        if not settings.is_lsystem:
+            return {'CANCELLED'}
+
+        obj.lsystem.rules.add()
+
+        return {'FINISHED'}
+
+
+class LSYSTEM_OT_remove_rule(bpy.types.Operator):
+    """Add a rule the the selected L-System"""
+    bl_idname = "lsystem.remove_rule"
+    bl_label = "Remove Rule"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    index: bpy.props.IntProperty(name='index')
+
+    def execute(self, context):
+        obj = context.active_object
+        settings = getattr(obj, 'lsystem', None)
+        if settings is None:
+            return {'CANCELLED'}
+        if not settings.is_lsystem:
+            return {'CANCELLED'}
+
+        obj.lsystem.rules.remove(self.index)
+
+        return {'FINISHED'}
+
+
 class LSYSTEM_OT_regenerate_lsystem(bpy.types.Operator):
-    """Regenerate an L-system"""
+    """Regenerate an L-System"""
     bl_idname = 'lsystem.regenerate'
     bl_label = 'Regenerate L-System'
     bl_options = {'REGISTER'}
@@ -55,14 +96,25 @@ class OBJECT_PT_lsystem_properties(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
-        row.operator(LSYSTEM_OT_regenerate_lsystem.bl_idname)
-        row = layout.row()
+        layout.row().label(text='Variables: ' + ', '.join(VARIABLES))
+        layout.row().label(text='Alphabet: ' + ', '.join(ALPHABET))
+        layout.row().operator(LSYSTEM_OT_regenerate_lsystem.bl_idname)
         obj = context.active_object
         if obj is not None and obj.type == 'MESH':
             lsystem = obj.lsystem
             if lsystem is not None:
-                row.prop(lsystem, 'formula')
+                layout.row().prop(lsystem, 'formula')
+                layout.row().operator(LSYSTEM_OT_add_rule.bl_idname)
+                for idx, rule in enumerate(lsystem.rules):
+                    split = layout.split(factor=0.15)
+                    col = split.column()
+                    row = col.row()
+                    row.prop(rule, 'src', text='')
+                    row.label(icon='FORWARD')
+                    split = split.column().split(factor=0.9)
+                    split.column().prop(rule, 'target', text='')
+                    op = split.column().operator(LSYSTEM_OT_remove_rule.bl_idname, text="X")
+                    op.index = idx
 
 
 def add_mesh_button(self, context):
@@ -71,6 +123,8 @@ def add_mesh_button(self, context):
 
 classes = (
     VIEW3D_MT_add_lsystem,
+    LSYSTEM_OT_add_rule,
+    LSYSTEM_OT_remove_rule,
     LSYSTEM_OT_regenerate_lsystem,
     OBJECT_PT_lsystem_properties,
 )
