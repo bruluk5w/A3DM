@@ -49,8 +49,9 @@ class ProductionRuleProperty(bpy.types.PropertyGroup):
 class LSystemSettings(bpy.types.PropertyGroup):
     is_lsystem: bpy.props.BoolProperty(default=False, options={'HIDDEN'})
     object: bpy.props.PointerProperty(type=bpy.types.Object, options={'HIDDEN'})
-    formula: bpy.props.StringProperty(name="Formula", get=get_formula, set=set_formula)
-    rules: bpy.props.CollectionProperty(name="Rules", type=ProductionRuleProperty, override={'USE_INSERTION'})
+    depth: bpy.props.IntProperty(name='Depth', default=3, min=1, max=15)
+    formula: bpy.props.StringProperty(name='Formula', get=get_formula, set=set_formula)
+    rules: bpy.props.CollectionProperty(name='Rules', type=ProductionRuleProperty, override={'USE_INSERTION'})
 
 
 classes = (

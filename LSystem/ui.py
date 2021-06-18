@@ -103,6 +103,7 @@ class OBJECT_PT_lsystem_properties(bpy.types.Panel):
         if obj is not None and obj.type == 'MESH':
             lsystem = obj.lsystem
             if lsystem is not None:
+                layout.row().prop(lsystem, 'depth', slider=True)
                 layout.row().prop(lsystem, 'formula')
                 layout.row().operator(LSYSTEM_OT_add_rule.bl_idname)
                 for idx, rule in enumerate(lsystem.rules):
