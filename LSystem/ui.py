@@ -1,10 +1,10 @@
 import bpy
 
-from .lsystem import LSystemSettings
+from .lsystem import lsystem
 
 
 class VIEW3D_MT_add_lsystem(bpy.types.Operator):
-    """Object Cursor Array"""
+    """Add an L-system to the scene"""
     bl_idname = "add.lsystem"
     bl_label = "L-System"
     bl_options = {'REGISTER', 'UNDO'}
@@ -21,12 +21,32 @@ class VIEW3D_MT_add_lsystem(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class LSYSTEM_OT_regenerate_lsystem(bpy.types.Operator):
+    """Regenerate an L-system"""
+    bl_idname = 'lsystem.regenerate'
+    bl_label = 'Regenerate L-System'
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        scene = context.scene
+        cursor = scene.cursor.location
+        obj = context.active_object
+        settings = getattr(obj, 'lsystem', None)
+        if settings is None:
+            return {'CANCELLED'}
+        if not settings.is_lsystem:
+            return {'CANCELLED'}
+
+        lsystem(obj, settings)
+        return {'FINISHED'}
+
+
 class OBJECT_PT_lsystem_properties(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_lsystem_properties"
-    bl_label = "L-System Properties"
+    bl_idname = 'OBJECT_PT_lsystem_properties'
+    bl_label = 'L-System Properties'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Tool"
+    bl_category = 'Tool'
 
     @classmethod
     def poll(cls, context):
@@ -36,12 +56,13 @@ class OBJECT_PT_lsystem_properties(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-
+        row.operator(LSYSTEM_OT_regenerate_lsystem.bl_idname)
+        row = layout.row()
         obj = context.active_object
         if obj is not None and obj.type == 'MESH':
             lsystem = obj.lsystem
             if lsystem is not None:
-                row.prop(lsystem, "formula")
+                row.prop(lsystem, 'formula')
 
 
 def add_mesh_button(self, context):
@@ -50,19 +71,17 @@ def add_mesh_button(self, context):
 
 classes = (
     VIEW3D_MT_add_lsystem,
+    LSYSTEM_OT_regenerate_lsystem,
     OBJECT_PT_lsystem_properties,
-    LSystemSettings,
 )
 do_register, do_unregister = bpy.utils.register_classes_factory(classes)
 
 
 def register():
     do_register()
-    bpy.types.Object.lsystem = bpy.props.PointerProperty(type=LSystemSettings)
     bpy.types.VIEW3D_MT_mesh_add.append(add_mesh_button)
 
 
 def unregister():
     bpy.types.VIEW3D_MT_mesh_add.remove(add_mesh_button)
     do_unregister()
-    del bpy.types.Object.lsystem
