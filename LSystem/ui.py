@@ -78,16 +78,24 @@ class LSYSTEM_OT_regenerate_lsystem(bpy.types.Operator):
         if not settings.is_lsystem:
             return {'CANCELLED'}
 
+        bpy.ops.object.mode_set(mode='OBJECT')
+
         lsystem(obj, settings)
+
+        # bpy.ops.object.mode_set(mode='OBJECT') # todo: remove
+
         return {'FINISHED'}
 
 
-class OBJECT_PT_lsystem_properties(bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_lsystem_properties'
-    bl_label = 'L-System Properties'
+class OBJECT_PT_lsystem:
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'Tool'
+
+
+class OBJECT_PT_lsystem_properties(OBJECT_PT_lsystem, bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_lsystem_properties'
+    bl_label = 'L-System Properties'
 
     @classmethod
     def poll(cls, context):
@@ -118,6 +126,19 @@ class OBJECT_PT_lsystem_properties(bpy.types.Panel):
                     op.index = idx
 
 
+class OBJECT_PT_lsystem_geometry_properties(OBJECT_PT_lsystem, bpy.types.Panel):
+    bl_parent_id = 'OBJECT_PT_lsystem_properties'
+    bl_label = 'Geometry settings'
+
+    def draw(self, context):
+        obj = context.active_object
+        if obj is not None and obj.type == 'MESH':
+            lsystem = obj.lsystem
+            if lsystem is not None:
+                layout = self.layout
+                layout.row().prop(lsystem, 'tube_segments', slider=True)
+
+
 def add_mesh_button(self, context):
     self.layout.operator(VIEW3D_MT_add_lsystem.bl_idname)
 
@@ -128,6 +149,7 @@ classes = (
     LSYSTEM_OT_remove_rule,
     LSYSTEM_OT_regenerate_lsystem,
     OBJECT_PT_lsystem_properties,
+    OBJECT_PT_lsystem_geometry_properties,
 )
 do_register, do_unregister = bpy.utils.register_classes_factory(classes)
 

@@ -1,7 +1,11 @@
 import bpy
 
 VARIABLES = {'F', 'X'}
-ALPHABET = VARIABLES | {'[', ']', '+', '-'}
+PUSH_STATE = '['
+POP_STATE = ']'
+ROTATE_POS = '+'
+ROTATE_NEG = '-'
+ALPHABET = VARIABLES | {PUSH_STATE, POP_STATE, ROTATE_POS, ROTATE_NEG}
 
 
 def get_rule_src(self):
@@ -52,6 +56,8 @@ class LSystemSettings(bpy.types.PropertyGroup):
     depth: bpy.props.IntProperty(name='Depth', default=3, min=1, max=15)
     formula: bpy.props.StringProperty(name='Formula', get=get_formula, set=set_formula)
     rules: bpy.props.CollectionProperty(name='Rules', type=ProductionRuleProperty, override={'USE_INSERTION'})
+
+    tube_segments: bpy.props.IntProperty(name='Tube Segments', default=6, min=3, max=100)
 
 
 classes = (
