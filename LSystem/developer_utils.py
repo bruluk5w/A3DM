@@ -3,7 +3,7 @@ import os
 import pkgutil
 import sys
 
-DEBUG = True
+DEBUG = False
 
 
 def setup_addon_modules(path, package_name, reload):

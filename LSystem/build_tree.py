@@ -5,29 +5,27 @@ from .lsystem_settings import LSystemSettings, VARIABLES, ALPHABET, PUSH_STATE, 
 
 
 class Node:
-    __slots__ = ('children', 'depth', 'rotate', 'elements', 'next_rotate')
+    __slots__ = ('depth', 'children', 'child_offsets', 'rotations', 'next_rotation')
 
     children: List['Node']
+    child_offsets: List[int]
     depth: int
-    rotate: float
-    elements: int
+    rotations: List[float]
+    next_rotation: float
 
-    next_rotate: float
-
-    def __init__(self, depth: int, rotate: float):
-        self.children = []
+    def __init__(self, depth: int):
         self.depth = depth
-        self.rotate = rotate
-        self.elements = 0
-
-        self.next_rotate = rotate
+        self.children = []
+        self.child_offsets = []
+        self.rotations = []
+        self.next_rotation = 0
 
 
 class LSystem:
     symbol_handlers = None  # type: Dict[str, Callable[[object, str, str, int], int]]
 
     def __init__(self):
-        self.root = Node(0, 0)
+        self.root = Node(0)
         self.current = self.root
         self.stack = []
 
@@ -42,8 +40,9 @@ class LSystem:
                 return
 
     def handle_push_state(self, char: str, formula: str, idx: int) -> int:
-        new = Node(self.current.depth + 1, self.current.next_rotate)
+        new = Node(self.current.depth + 1)
         self.current.children.append(new)
+        self.current.child_offsets.append(len(self.current.rotations))
         self.stack.append(self.current)
         self.current = new
         return idx + 1
@@ -58,9 +57,9 @@ class LSystem:
 
     def handle_rotate(self, char: str,  formula: str, idx: int) -> int:
         if char == '+':
-            self.current.next_rotate += 1
+            self.current.next_rotation += 1
         elif char == '-':
-            self.current.next_rotate -= 1
+            self.current.next_rotation -= 1
         else:
             print('Error: Invalid character encountered in handle_rotate: {}.'.format(char))
             return -1
@@ -68,7 +67,8 @@ class LSystem:
         return idx + 1
 
     def handle_variable(self, char: str,  formula: str, idx: int) -> int:
-        self.current.elements += 1
+        self.current.rotations.append(self.current.next_rotation)
+        self.current.next_rotation = 0
         return idx + 1
 
 

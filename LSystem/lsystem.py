@@ -25,8 +25,8 @@ def lsystem(obj: bpy.types.Object, settings: 'LSystemSettings'):
 
     rules = {rule.src: rule.target for rule in settings.rules}
     rules.update({c: c for c in (VARIABLES - rules.keys())})
-    if not 0 < settings.depth < 15:
-        print('Error: Invalid recursion depth specified: {}\nShould be between 1 and 15.'.format(settings.depth))
+    if not 0 <= settings.depth < 15:
+        print('Error: Invalid recursion depth specified: {}\nShould be between 0 and 15.'.format(settings.depth))
         return
 
     if not all(x in ALPHABET for x in settings.formula):
@@ -52,12 +52,12 @@ def lsystem(obj: bpy.types.Object, settings: 'LSystemSettings'):
             for c in formula
         ])
 
+    if settings.print_formula:
+        print(formula)
+
     tree = LSystem()
     tree.build_tree(formula, settings)
     draw_tree(obj, tree, settings)
-
-
-FlIP_180 = Matrix.Rotation(pi, 4, 'X')
 
 
 def draw_tree(obj: bpy.types.Object, tree: LSystem, settings: LSystemSettings):
@@ -65,10 +65,10 @@ def draw_tree(obj: bpy.types.Object, tree: LSystem, settings: LSystemSettings):
         print('Invalid object passed. There is no mesh.')
         return
     mesh = bmesh.new(use_operators=True)
-    mesh = ensure_bmesh(mesh)  # todo: remove
+    # mesh = ensure_bmesh(mesh)  # todo: remove
 
     # recursively draw the tree
-    bmesh.ops.create_circle(mesh, cap_ends=True, radius=0.2, segments=settings.tube_segments, matrix=FlIP_180)
+    bmesh.ops.create_circle(mesh, cap_ends=True, radius=0.2, segments=settings.tube_segments)
     mesh.faces.ensure_lookup_table()
     draw_node(mesh.faces[0], tree.root, mesh, settings)
 
@@ -77,12 +77,49 @@ def draw_tree(obj: bpy.types.Object, tree: LSystem, settings: LSystemSettings):
     obj.data.update()
 
 
-def draw_node(last_circle, node: Node, mesh: bmesh.types.BMesh, settings: LSystemSettings):
-    print('Draw node')
-    when building tree track at which offset children are entered and build them here
-    for idx in range(node.elements):
+def draw_node(last_circle, node: Node, mesh: bmesh.types.BMesh, settings: LSystemSettings,
+              transform=Matrix.Identity(4), segment_r=Matrix.Identity(4)):
+    assert len(node.children) == len(node.child_offsets)
+
+    def duplicate_face(f):
+        return bmesh.ops.duplicate(mesh, geom=[f] + f.edges[:] + f.verts[:])['face_map'][f]
+
+    def get_rotations(segment: int):
+        angle = node.rotations[segment] * pi * 0.25
+        return Matrix.Rotation(angle * 0.5, 4, 'X'), Matrix.Rotation(angle * 0.5, 4, 'X')
+
+    children_done = 0
+
+    def draw_children(last_circle, joint_idx: int, transform):
+        nonlocal children_done
+        while children_done != len(node.child_offsets) and node.child_offsets[children_done] == joint_idx:
+            draw_node(duplicate_face(last_circle), node.children[children_done], mesh, settings, transform)
+            children_done += 1
+
+    for idx, rotate in enumerate(node.rotations):
+        # draw children that branch from the current joint
+        draw_children(last_circle, idx, transform)
+
+        # joint_r is rotation of joint from last segment, segment_r is rotation of next segment from this joint
+        joint_r, segment_r = get_rotations(idx)
+        # orient joint
+        bmesh.ops.transform(mesh, verts=last_circle.verts, matrix=joint_r, space=transform.inverted())
+        # orient direction for next segment
+        transform = transform @ segment_r @ joint_r
+
+        # draw current branch segment
         last_circle = bmesh.ops.extrude_discrete_faces(mesh, faces=[last_circle])['faces'][0]
-        bmesh.ops.translate(mesh, verts=last_circle.verts, vec=(0, 0, 1), space=Matrix.Rotation(pi * 0.25 * node.rotate / node.elements, 4, 'X'))
+
+        t = Matrix.Translation((0, 0, 1))
+        bmesh.ops.transform(mesh, verts=last_circle.verts, matrix=t @ segment_r, space=transform.inverted())
+        transform = transform @ t
+
+    # draw children that branch from the last joint
+    draw_children(last_circle, len(node.rotations), transform)
+
+    assert children_done == len(node.children)
+
+    return
 
     for idx, child in enumerate(node.children):
         if idx < len(node.children) - 1:
@@ -90,6 +127,7 @@ def draw_node(last_circle, node: Node, mesh: bmesh.types.BMesh, settings: LSyste
         draw_node(last_circle, child, mesh, settings)
         if idx < len(node.children) - 1:
             last_circle = new_circle
+
 
 
 def ensure_bmesh(mesh):

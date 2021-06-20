@@ -72,6 +72,9 @@ class LSYSTEM_OT_regenerate_lsystem(bpy.types.Operator):
         scene = context.scene
         cursor = scene.cursor.location
         obj = context.active_object
+        if obj is None:
+            return {'CANCELLED'}
+
         settings = getattr(obj, 'lsystem', None)
         if settings is None:
             return {'CANCELLED'}
@@ -82,7 +85,7 @@ class LSYSTEM_OT_regenerate_lsystem(bpy.types.Operator):
 
         lsystem(obj, settings)
 
-        # bpy.ops.object.mode_set(mode='OBJECT') # todo: remove
+        bpy.ops.object.shade_smooth()
 
         return {'FINISHED'}
 
@@ -113,6 +116,7 @@ class OBJECT_PT_lsystem_properties(OBJECT_PT_lsystem, bpy.types.Panel):
             if lsystem is not None:
                 layout.row().prop(lsystem, 'depth', slider=True)
                 layout.row().prop(lsystem, 'formula')
+                layout.row().prop(lsystem, 'print_formula')
                 layout.row().operator(LSYSTEM_OT_add_rule.bl_idname)
                 for idx, rule in enumerate(lsystem.rules):
                     split = layout.split(factor=0.15)

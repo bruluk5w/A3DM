@@ -53,8 +53,9 @@ class ProductionRuleProperty(bpy.types.PropertyGroup):
 class LSystemSettings(bpy.types.PropertyGroup):
     is_lsystem: bpy.props.BoolProperty(default=False, options={'HIDDEN'})
     object: bpy.props.PointerProperty(type=bpy.types.Object, options={'HIDDEN'})
-    depth: bpy.props.IntProperty(name='Depth', default=3, min=1, max=15)
-    formula: bpy.props.StringProperty(name='Formula', get=get_formula, set=set_formula)
+    depth: bpy.props.IntProperty(name='Depth', default=3, min=0, max=15)
+    formula: bpy.props.StringProperty(name='Axiom', get=get_formula, set=set_formula)
+    print_formula: bpy.props.BoolProperty(name='Print Expanded String')
     rules: bpy.props.CollectionProperty(name='Rules', type=ProductionRuleProperty, override={'USE_INSERTION'})
 
     tube_segments: bpy.props.IntProperty(name='Tube Segments', default=6, min=3, max=100)
