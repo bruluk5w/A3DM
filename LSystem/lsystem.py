@@ -65,7 +65,6 @@ def draw_tree(obj: bpy.types.Object, tree: LSystem, settings: LSystemSettings):
         print('Invalid object passed. There is no mesh.')
         return
     mesh = bmesh.new(use_operators=True)
-    # mesh = ensure_bmesh(mesh)  # todo: remove
 
     # recursively draw the tree
     bmesh.ops.create_circle(mesh, cap_ends=True, radius=0.2, segments=settings.tube_segments)
@@ -78,15 +77,18 @@ def draw_tree(obj: bpy.types.Object, tree: LSystem, settings: LSystemSettings):
 
 
 def draw_node(last_circle, node: Node, mesh: bmesh.types.BMesh, settings: LSystemSettings,
-              transform=Matrix.Identity(4), segment_r=Matrix.Identity(4)):
+              transform=Matrix.Identity(4)):
     assert len(node.children) == len(node.child_offsets)
 
     def duplicate_face(f):
         return bmesh.ops.duplicate(mesh, geom=[f] + f.edges[:] + f.verts[:])['face_map'][f]
 
     def get_rotations(segment: int):
-        angle = node.rotations[segment] * pi * 0.25
-        return Matrix.Rotation(angle * 0.5, 4, 'X'), Matrix.Rotation(angle * 0.5, 4, 'X')
+        angle_x, angle_z = node.rotations[segment]
+        angle_x = angle_x * pi * settings.default_rotation_x
+        angle_z = angle_z * pi * settings.default_rotation_z
+        rot = Matrix.Rotation(angle_z * 0.5, 4, 'Z') @ Matrix.Rotation(angle_x * 0.5, 4, 'X')
+        return rot, rot
 
     children_done = 0
 
@@ -120,14 +122,6 @@ def draw_node(last_circle, node: Node, mesh: bmesh.types.BMesh, settings: LSyste
     assert children_done == len(node.children)
 
     return
-
-    for idx, child in enumerate(node.children):
-        if idx < len(node.children) - 1:
-            new_circle = bmesh.ops.duplicate(mesh, geom=[last_circle] + last_circle.edges[:] + last_circle.verts[:])['face_map'][last_circle]
-        draw_node(last_circle, child, mesh, settings)
-        if idx < len(node.children) - 1:
-            last_circle = new_circle
-
 
 
 def ensure_bmesh(mesh):

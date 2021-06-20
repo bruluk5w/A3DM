@@ -1,0 +1,42 @@
+Explanation:
+- X and F are variables and advance the drawing by 1.
+- [ and ] push and pop respectively the drawing state
+- + and - rotate the next segment around the x-axis (positive direction and negative direction respectively)
+- * and / rotate the next segment around the z-axis (positive direction and negative direction respectively)
+- +-*/ accept a positive float parameter: e.g.: *(1.5). The ui allows to define a standard rotation value for each 
+rotational axis. The optional parameters on the the rotation operators scale their respective default value: -(0.5)
+means: rotate half the default angle around the negative x-axis.
+
+These are some examples:
+
+weed 1
+Axiom: X
+Rules:
+F -> FF
+X -> F-[[X]+X]+F[-X]+FX
+
+weed 2
+Axiom: X
+Rules:
+F -> FF
+X -> F-[[X]+X]+F[+FX]-X
+
+weed 2 (with parameter)
+Axiom: X
+Rules:
+F -> FF
+X -> F-[[X]+(2)X]+F[+FX]-(2)X
+
+weed 2 3d 
+Axiom: X
+Rules:
+F -> FF
+X -> F-[[X]+*(0.5)X]+F[+/FX]-(1)X
+
+
+basic tree
+Axiom: X
+Rules:
+F -> FF
+X -> F[-X]+X
+

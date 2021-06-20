@@ -1,11 +1,15 @@
 import bpy
+from math import pi
 
 VARIABLES = {'F', 'X'}
 PUSH_STATE = '['
 POP_STATE = ']'
-ROTATE_POS = '+'
-ROTATE_NEG = '-'
-ALPHABET = VARIABLES | {PUSH_STATE, POP_STATE, ROTATE_POS, ROTATE_NEG}
+ROTATE_X_POS = '+'
+ROTATE_X_NEG = '-'
+ROTATE_Z_POS = '*'
+ROTATE_Z_NEG = '/'
+IMPLICIT_SYMBOLS = {'(', ')', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+ALPHABET = VARIABLES | IMPLICIT_SYMBOLS | {PUSH_STATE, POP_STATE, ROTATE_X_POS, ROTATE_X_NEG, ROTATE_Z_POS, ROTATE_Z_NEG}
 
 
 def get_rule_src(self):
@@ -59,6 +63,8 @@ class LSystemSettings(bpy.types.PropertyGroup):
     rules: bpy.props.CollectionProperty(name='Rules', type=ProductionRuleProperty, override={'USE_INSERTION'})
 
     tube_segments: bpy.props.IntProperty(name='Tube Segments', default=6, min=3, max=100)
+    default_rotation_x: bpy.props.FloatProperty(name='Default X Rot', default=0.25, min=-1, max=1)
+    default_rotation_z: bpy.props.FloatProperty(name='Default Z Rot', default=0.25, min=-1, max=1)
 
 
 classes = (

@@ -141,6 +141,8 @@ class OBJECT_PT_lsystem_geometry_properties(OBJECT_PT_lsystem, bpy.types.Panel):
             if lsystem is not None:
                 layout = self.layout
                 layout.row().prop(lsystem, 'tube_segments', slider=True)
+                layout.row().prop(lsystem, 'default_rotation_x', slider=True)
+                layout.row().prop(lsystem, 'default_rotation_z', slider=True)
 
 
 def add_mesh_button(self, context):
