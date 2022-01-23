@@ -1,5 +1,8 @@
-Implements an addon for blender that allows to create L-systems.
-The addodn requires at least Blender 2.8 but 2.92 is reccommended since it has been tested with this version.
+Implements an addon for blender that creates L-systems.
+-----------------------------------
+![Screenshot](./ScreenShot.png)
+-----------------------------------
+The addon requires at least Blender 2.8 but 2.92 is reccommended since it has been tested with this version.
 Install the addon from Blender's Preferences editor by selecting the "Add-ons" tab on the left in the Preferences 
 editor and selecting "Install..." on the top right. Install the zip-file with the addon.
 
